@@ -166,12 +166,14 @@ where
 
 #[cfg(test)]
 mod test {
-    use embedded_can::Frame as CANFrame;
+    use super::*;
+    use crate::interface::{raw_to_id, ChademoCanFrame};
+    #[cfg(feature = "eh1")]
+    pub(crate) use embedded_can::Frame;
+    #[cfg(feature = "eh0")]
+    pub(crate) use embedded_hal::can::Frame;
     use frames::X109;
 
-    use crate::interface::{raw_to_id, ChademoCanFrame};
-
-    use super::*;
     #[test]
     fn soc_test() {
         let frame = ChademoCanFrame::new(

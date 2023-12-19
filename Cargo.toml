@@ -1,9 +1,9 @@
 [package]
 name = "chademo-rs"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Rand <dint04wooded@icloud.com>"]
-description = "A embedded-hal crate for bi-directional CHAdeMO EV charging based on IEEE Std 2030.1.1-2021"
+description = "An embedded-hal crate for bi-directional CHAdeMO EV charging based on IEEE Std 2030.1.1-2021"
 repository = "https://github.com/rand12345/chademo-rs"
 license = "MIT"
 readme = "README.md"
