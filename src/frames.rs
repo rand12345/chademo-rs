@@ -3,13 +3,11 @@ pub(crate) use embedded_can::Frame;
 #[cfg(feature = "eh0")]
 pub(crate) use embedded_hal::can::Frame;
 
+use crate::interface;
 use interface::raw_to_id;
-
 use std::marker::PhantomData;
 
-use crate::interface;
-
-/// Vehicle CAN frames
+#[doc = r"! Vehicle CAN frames"]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct X100 {
     /// Set “minimum current” defined by vehicle
@@ -148,13 +146,13 @@ pub struct X102Faults {
     /// Regardless of opto-coupler (j) status, the EVSE shall regard this flag as charging termination order from the vehicle if it is equal to 1, and stop charging.
     pub fault_battery_overvoltage: bool,
 }
-impl Into<bool> for X102Faults {
-    fn into(self) -> bool {
-        self.fault_battery_voltage_deviation
-            | self.fault_high_battery_temperature
-            | self.fault_battery_current_deviation
-            | self.fault_battery_undervoltage
-            | self.fault_battery_overvoltage
+impl From<X102Faults> for bool {
+    fn from(val: X102Faults) -> bool {
+        val.fault_battery_voltage_deviation
+            | val.fault_high_battery_temperature
+            | val.fault_battery_current_deviation
+            | val.fault_battery_undervoltage
+            | val.fault_battery_overvoltage
     }
 }
 
@@ -224,16 +222,16 @@ impl From<u8> for X102Status {
         }
     }
 }
-impl Into<u8> for X102Status {
-    fn into(self) -> u8 {
+impl From<X102Status> for u8 {
+    fn from(val: X102Status) -> Self {
         let mut result: u8 = 0;
 
-        result |= (self.status_discharge_compatible as u8) << 7;
-        result |= (self.status_normal_stop_request as u8) << 4;
-        result |= (self.status_vehicle as u8) << 3;
-        result |= (self.status_charging_system as u8) << 2;
-        result |= (self.status_vehicle_shifter_position as u8) << 1;
-        result |= self.status_vehicle_charging as u8;
+        result |= (val.status_discharge_compatible as u8) << 7;
+        result |= (val.status_normal_stop_request as u8) << 4;
+        result |= (val.status_vehicle as u8) << 3;
+        result |= (val.status_charging_system as u8) << 2;
+        result |= (val.status_vehicle_shifter_position as u8) << 1;
+        result |= val.status_vehicle_charging as u8;
 
         result
     }
@@ -343,28 +341,28 @@ impl std::fmt::Display for X109Status {
         )
     }
 }
-impl Into<u8> for X109Status {
-    fn into(self) -> u8 {
+impl From<X109Status> for u8 {
+    fn from(val: X109Status) -> Self {
         let mut result = 0u8;
-        result |= (self.status_charger_stop_control as u8) << 5;
-        result |= (self.fault_charging_system_malfunction as u8) << 4;
-        result |= (self.fault_battery_incompatibility as u8) << 3;
-        result |= (self.status_vehicle_connector_lock as u8) << 2;
-        result |= (self.fault_station_malfunction as u8) << 1;
-        result |= (self.status_station as u8) << 0;
+        result |= (val.status_charger_stop_control as u8) << 5;
+        result |= (val.fault_charging_system_malfunction as u8) << 4;
+        result |= (val.fault_battery_incompatibility as u8) << 3;
+        result |= (val.status_vehicle_connector_lock as u8) << 2;
+        result |= (val.fault_station_malfunction as u8) << 1;
+        result |= val.status_station as u8;
         result
     }
 }
 impl From<u8> for X109Status {
     fn from(value: u8) -> Self {
-        let mut x109status = X109Status::default();
-        x109status.status_charger_stop_control = get_bit(value, 5);
-        x109status.fault_charging_system_malfunction = get_bit(value, 4);
-        x109status.fault_battery_incompatibility = get_bit(value, 3);
-        x109status.status_vehicle_connector_lock = get_bit(value, 2);
-        x109status.fault_station_malfunction = get_bit(value, 1);
-        x109status.status_station = get_bit(value, 0);
-        x109status
+        X109Status {
+            status_charger_stop_control: get_bit(value, 5),
+            fault_charging_system_malfunction: get_bit(value, 4),
+            fault_battery_incompatibility: get_bit(value, 3),
+            status_vehicle_connector_lock: get_bit(value, 2),
+            fault_station_malfunction: get_bit(value, 1),
+            status_station: get_bit(value, 0),
+        }
     }
 }
 /// EVSE CAN frame
@@ -387,7 +385,7 @@ impl<T: Frame> X109<T> {
         result[0] = self.control_protocol_number_qc;
         let voltage_bytes: [u8; 2] = ((self.output_voltage) as u16).to_le_bytes();
         result[1..=2].copy_from_slice(&voltage_bytes);
-        result[3] = (self.output_current) as u8;
+        result[3] = self.output_current;
         result[4] = self.discharge_compatitiblity.into(); // EVSE discharge compatitbility flag
         result[5] = self.status.into();
         result[6] = self.remaining_charging_time_10s_bit;
@@ -396,8 +394,10 @@ impl<T: Frame> X109<T> {
         T::new(id, &result)
     }
     pub fn new(control_protocol_number_qc: u8, discharge_compatitiblity: bool) -> Self {
-        let mut status = X109Status::default();
-        status.status_charger_stop_control = true;
+        let status = X109Status {
+            status_charger_stop_control: true,
+            ..Default::default()
+        };
         Self {
             control_protocol_number_qc,
             discharge_compatitiblity,
@@ -516,9 +516,9 @@ where
         lower_threshold_voltage: u16,
     ) -> Self {
         Self {
-            discharge_current: discharge_current,
+            discharge_current,
             input_voltage,
-            input_current: input_current,
+            input_current,
             lower_threshold_voltage,
             phantom: PhantomData,
         }
@@ -630,7 +630,7 @@ where
         frame.data().len() == dlc,
         "CANFrame decoder error: DLC for can frame is not 8"
     );
-    &frame.data()
+    frame.data()
 }
 #[cfg(test)]
 mod test {

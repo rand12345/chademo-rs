@@ -8,7 +8,7 @@ use embedded_hal::can::{Frame, Id, StandardId};
 use crate::error::ChademoError;
 
 pub(crate) fn raw_to_id(id: u16) -> Id {
-    Id::from(Id::Standard(StandardId::new(id).unwrap()))
+    Id::Standard(StandardId::new(id).unwrap())
 }
 pub(crate) fn standard_id_to_raw(id: Id) -> Result<u16, ChademoError> {
     match id {
@@ -99,14 +99,14 @@ impl Frame for ChademoCanFrame {
             _ => return None,
         };
 
-        Data::new(data).and_then(|data| {
-            Some(Self {
+        Data::new(data).map(|data| {
+            Self {
                 data,
                 id,
                 // dlc: data.len() as u8,
                 rtr: false,
                 err: false,
-            })
+            }
         })
     }
 
@@ -123,9 +123,7 @@ impl Frame for ChademoCanFrame {
     }
 
     fn id(&self) -> Id {
-        Id::from(Id::Standard(
-            StandardId::new(self.id as u16).expect("StandardID construction failed"),
-        ))
+        Id::Standard(StandardId::new(self.id as u16).expect("StandardID construction failed"))
     }
 
     fn dlc(&self) -> usize {

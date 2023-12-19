@@ -5,8 +5,8 @@
 use frames::*;
 use interface::standard_id_to_raw;
 
-mod error;
-mod frames;
+pub mod error;
+pub mod frames;
 mod interface;
 
 #[derive(Clone, Debug)]
@@ -56,20 +56,21 @@ where
             x200: X200::default(),
             //EVSE encode
             x109: X109::new(2, true),
-            x108: X108::new(max_amps, 500, true, 435).into(),
+            x108: X108::new(max_amps, 500, true, 435),
             x208: X208::new(0, 500, max_amps, 250),
             x209: X209::new(2, 0),
         }
     }
 
     pub fn decode(&mut self, frame: T) -> Result<(), error::ChademoError> {
-        Ok(match standard_id_to_raw(frame.id())? {
+        match standard_id_to_raw(frame.id())? {
             0x100 => self.x100 = X100::from(&frame),
             0x101 => self.x101 = X101::from(&frame),
             0x102 => self.x102 = X102::from(&frame),
             0x200 => self.x200 = X200::from(&frame),
             bad_id => return Err(error::ChademoError::DecodeBadId(bad_id)),
-        })
+        };
+        Ok(())
     }
     /// Flag to EV that charge has been cancelled
     /// Sets 109.5.5 high
@@ -125,7 +126,7 @@ where
     }
 
     pub fn fault(&self) -> bool {
-        self.x102.fault().into()
+        self.x102.fault()
     }
 
     pub fn target_voltage(&self) -> &f32 {
