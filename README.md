@@ -6,7 +6,7 @@ Tested with Nissan Leaf ZE0 for HVDC bidirectional charging.
 
 ## Feature flags
 
-Defaults to embedded-hal 0.2.7
+Defaults to embedded-hal 0.2.7  
 Use `default-features = false` and `"eh1"` for embedded-can 0.4
 
 ## CAN bus logs
